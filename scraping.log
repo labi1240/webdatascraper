@@ -1,3 +1,83 @@
 2025-01-13 14:47:02,158 - ERROR - Error in batch processing: 
 2025-01-13 14:52:28,833 - ERROR - Error fetching results: Expecting value: line 1 column 1 (char 0)
 2025-01-13 14:52:28,835 - ERROR - Error in batch processing: 
+2025-01-13 14:56:25,027 - INFO - Processing 1 date ranges
+2025-01-13 14:56:25,385 - INFO - Request URL: https://app.realmmlp.ca/signin?redirect=%2Fsearch%3Favailability%3DU%26geoAnd%3DY%26unavailableDate%3D%253E%253D01%252F1%252F2024%26area%3DPeel%26status%3DTER%26district%255B0%255D%3DBrampton%26district%255B1%255D%3DMississauga%26class%3DFREE%26saleOrRent%3DSALE%26%2524gid%3Dtreb%26gid%3DTREB%26%2524isMapSearch%3Dtrue%26%2524meta%255BisMapSearch%255D%3Dtrue%26%2524orderby%3DdaysOnMarket%2Bdesc%26%2524output%3Dlist%26%2524select%3Dstatus%26%2524select%3Dlatitude%26%2524select%3Dneighborhoods%26%2524select%3DoriginalListPrice%26%2524select%3DpriceLow%26%2524select%3DpostalCode%26%2524select%3Dprice%26%2524select%3Dclass%26%2524select%3Dmodified%26%2524select%3DdisplayStatus%26%2524select%3DtypeName%26%2524select%3Dlongitude%26%2524select%3DparcelID%26%2524select%3Dbathrooms%26%2524select%3Dcity%26%2524select%3DdaysOnMarket%26%2524select%3Dbedrooms%26%2524select%3DlistingID%26%2524select%3DpricePerSquareFoot%26%2524select%3DstreetAddress%26%2524select%3Dstyle%26%2524select%3DstreetName%26%2524select%3DstreetNumber%26%2524select%3DsaleOrRent%26%2524select%3DsquareFeetText%26%2524select%3DsquareFeet%26%2524imageSizes%255B0%255D%3D150%26%2524imageSizes%255B1%255D%3D600%26%2524project%3Dsummary%26%2524skip%3D0%26%2524take%3D200%26lastUpdateDate%255B0%255D%3D%253E%253D01%252F09%252F2025%26lastUpdateDate%255B1%255D%3D%253C%253D01%252F13%252F2025
+2025-01-13 14:56:25,385 - INFO - Response Status Code: 404
+2025-01-13 14:56:25,386 - ERROR - Error response: <!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta charset="utf-8"/>
+		<title>404 NOT FOUND</title>
+	</head>
+	<body style="margin-top:100px; text-align:center;">
+		<div style="display: inline-block;">
+			<img style="width:253px; height:100%;" src="/images/404.png?83e7cf6f" alt="404 NOT FOUND"/>
+		</div>
+	</body>
+</html>
+
+2025-01-13 14:56:25,387 - ERROR - Error in fetch_all_pages_for_date_range: 
+2025-01-13 14:56:25,390 - INFO - Successfully fetched total of 0 listings
+2025-01-13 14:56:36,135 - INFO - Processing 1 date ranges
+2025-01-13 14:56:36,602 - INFO - Request URL: https://app.realmmlp.ca/signin?redirect=%2Fsearch%3Favailability%3DU%26geoAnd%3DY%26unavailableDate%3D%253E%253D01%252F1%252F2024%26area%3DPeel%26status%3DTER%26district%255B0%255D%3DBrampton%26district%255B1%255D%3DMississauga%26class%3DFREE%26saleOrRent%3DSALE%26%2524gid%3Dtreb%26gid%3DTREB%26%2524isMapSearch%3Dtrue%26%2524meta%255BisMapSearch%255D%3Dtrue%26%2524orderby%3DdaysOnMarket%2Bdesc%26%2524output%3Dlist%26%2524select%3Dstatus%26%2524select%3Dlatitude%26%2524select%3Dneighborhoods%26%2524select%3DoriginalListPrice%26%2524select%3DpriceLow%26%2524select%3DpostalCode%26%2524select%3Dprice%26%2524select%3Dclass%26%2524select%3Dmodified%26%2524select%3DdisplayStatus%26%2524select%3DtypeName%26%2524select%3Dlongitude%26%2524select%3DparcelID%26%2524select%3Dbathrooms%26%2524select%3Dcity%26%2524select%3DdaysOnMarket%26%2524select%3Dbedrooms%26%2524select%3DlistingID%26%2524select%3DpricePerSquareFoot%26%2524select%3DstreetAddress%26%2524select%3Dstyle%26%2524select%3DstreetName%26%2524select%3DstreetNumber%26%2524select%3DsaleOrRent%26%2524select%3DsquareFeetText%26%2524select%3DsquareFeet%26%2524imageSizes%255B0%255D%3D150%26%2524imageSizes%255B1%255D%3D600%26%2524project%3Dsummary%26%2524skip%3D0%26%2524take%3D200%26lastUpdateDate%255B0%255D%3D%253E%253D01%252F09%252F2025%26lastUpdateDate%255B1%255D%3D%253C%253D01%252F13%252F2025
+2025-01-13 14:56:36,603 - INFO - Response Status Code: 404
+2025-01-13 14:56:36,603 - ERROR - Error response: <!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta charset="utf-8"/>
+		<title>404 NOT FOUND</title>
+	</head>
+	<body style="margin-top:100px; text-align:center;">
+		<div style="display: inline-block;">
+			<img style="width:253px; height:100%;" src="/images/404.png?83e7cf6f" alt="404 NOT FOUND"/>
+		</div>
+	</body>
+</html>
+
+2025-01-13 14:56:36,604 - ERROR - Error in fetch_all_pages_for_date_range: 
+2025-01-13 14:56:36,608 - INFO - Successfully fetched total of 0 listings
+2025-01-13 14:59:03,849 - INFO - Total date ranges to process: 1
+2025-01-13 14:59:06,493 - INFO - Fetched 96 listings for date range ('01/03/2025', '01/07/2025'). Total so far: 96
+2025-01-13 14:59:06,494 - INFO - Total listings fetched: 96
+2025-01-13 14:59:06,630 - INFO - Results successfully saved to mylistings.json
+2025-01-13 15:01:12,807 - INFO - Processing 1 date ranges
+2025-01-13 15:01:13,134 - INFO - Initial signin page status: 404
+2025-01-13 15:01:13,218 - INFO - Authentication response status: 404
+2025-01-13 15:01:13,219 - ERROR - Authentication failed: <!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta charset="utf-8"/>
+		<title>404 NOT FOUND</title>
+	</head>
+	<body style="margin-top:100px; text-align:center;">
+		<div style="display: inline-block;">
+			<img style="width:253px; height:100%;" src="/images/404.png?83e7cf6f" alt="404 NOT FOUND"/>
+		</div>
+	</body>
+</html>
+
+2025-01-13 15:01:13,221 - ERROR - Failed to authenticate session
+2025-01-13 15:01:13,231 - INFO - Successfully fetched total of 0 listings
+2025-01-13 15:01:25,911 - INFO - Processing 1 date ranges
+2025-01-13 15:01:26,161 - INFO - Initial signin page status: 404
+2025-01-13 15:01:26,246 - INFO - Authentication response status: 404
+2025-01-13 15:01:26,246 - ERROR - Authentication failed: <!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta charset="utf-8"/>
+		<title>404 NOT FOUND</title>
+	</head>
+	<body style="margin-top:100px; text-align:center;">
+		<div style="display: inline-block;">
+			<img style="width:253px; height:100%;" src="/images/404.png?83e7cf6f" alt="404 NOT FOUND"/>
+		</div>
+	</body>
+</html>
+
+2025-01-13 15:01:26,248 - ERROR - Failed to authenticate session
+2025-01-13 15:01:26,250 - INFO - Successfully fetched total of 0 listings

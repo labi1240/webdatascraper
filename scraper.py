@@ -50,13 +50,16 @@ base_params = {
 }
 
 def create_session():
-    """Create a new session with retry strategy."""
+    """
+    Create a new session with retry strategy.
+    This function is called by each thread to have its own session.
+    """
     session = requests.Session()
     retry = Retry(
         total=5,
         backoff_factor=1,
         status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET"]
+        allowed_methods=["GET"],
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('https://', adapter)
@@ -66,17 +69,45 @@ def create_session():
     session.headers.update({
         'accept': 'application/json',
         'accept-language': 'en-US,en;q=0.9',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'baggage': 'sentry-environment=production,sentry-public_key=e9f1abedeae34f04a098c5c0ebb1737a,sentry-trace_id=4d885e178ee6450ab482343ccdd4e648,sentry-sample_rate=0.1,sentry-sampled=false',
         'referer': 'https://app.realmmlp.ca/s',
-        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"'
+        'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'sentry-trace': '4d885e178ee6450ab482343ccdd4e648-ac8d50b4649cdddd-0',
+        'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
+        'x-auth-userid': '537fa6ee5e5599a855d2f81b',
+        'x-requested-with': 'XMLHttpRequest'
+    })
+
+    # Add required cookies
+    session.cookies.update({
+        '_ga': 'GA1.3.6299276.1729021923',
+        '_ga_1': 'GA1.1.6299276.1729021923',
+        '_gid': 'GA1.3.1792005162.1729112353',
+        '_gat': '1',
+        '_gat_1': '1',
+        's': 'eyJwYXNzcG9ydCI6eyJ1c2VyIjoiNTM3ZmE2ZWU1ZTU1OTlhODU1ZDJmODFiIn0sInMiOiJhYWQ5YmY5Zi03YmEzLTQxZGUtYTFjZS1jNGZkMWFjM2IyZWEiLCJub3ciOjI4ODE5OTQzLCJpIjo4MH0=',
+        's.sig': 'ASpJMzN-iA35W9KNclYWvG1ZwBs',
+        '_ga_G0XQP73LHV': 'GS1.1.1729193701.4.1.1729196603.21.1.1860857804'
     })
 
     return session
 
 def fetch_results(skip, take, last_update_start, last_update_end, session):
-    """Fetch a batch of listings from the API."""
+    """
+    Fetch a batch of listings from the API based on the provided date range.
+
+    :param skip: Number of records to skip (for pagination).
+    :param take: Number of records to retrieve.
+    :param last_update_start: Start date for filtering listings.
+    :param last_update_end: End date for filtering listings.
+    :param session: The requests session to use for the HTTP request.
+    :return: List of listings or an empty list if none are found.
+    """
     params = base_params.copy()
     params['$skip'] = str(skip)
     params['$take'] = str(take)
@@ -87,130 +118,105 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
         response = session.get(
             'https://app.realmmlp.ca/search',
             params=params,
-            timeout=30
+            timeout=10
         )
+        response.raise_for_status()
+        data = response.json()
+        logging.debug(f"Response Data: {json.dumps(data, indent=4)}")
 
-        # Log the response details for debugging
-        logging.info(f"Request URL: {response.url}")
-        logging.info(f"Response Status Code: {response.status_code}")
-
-        if response.status_code != 200:
-            logging.error(f"Error response: {response.text}")
-            return []
-
-        try:
-            data = response.json()
-        except json.JSONDecodeError as e:
-            logging.error(f"JSON Decode Error: {str(e)}")
-            logging.error(f"Response Content: {response.text[:500]}")  # Log first 500 chars of response
-            return []
-
+        # Correctly access the 'data' list within 'searchResults'
         listings = data.get('searchResults', {}).get('data', [])
-
-        if not listings:
-            logging.warning(f"No listings found in response. Response: {data}")
-            return []
-
-        # Process each listing to format the data
-        for listing in listings:
-            if 'price' in listing:
-                listing['priceFormatted'] = f"${listing['price']:,.2f}"
-            if 'squareFeet' in listing:
-                listing['squareFeet'] = listing['squareFeet'].replace(',', '')
-
-        logging.info(f"Successfully fetched {len(listings)} listings")
         return listings
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"HTTP error occurred: {http_err}")
+        logging.error(f"Response content: {response.text}")
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Request exception: {req_err}")
+    except ValueError:
+        logging.error("Error decoding JSON response.")
+        logging.error(f"Response content: {response.text}")
+    return []
 
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Request Error: {str(e)}")
-        return []
-    except Exception as e:
-        logging.error(f"Unexpected Error: {str(e)}")
-        return []
+def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end):
+    """
+    Fetch all pages of listings for a given date range.
 
-def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end, progress_callback=None):
-    """Fetch all pages of listings for a given date range."""
-    try:
-        listings = []
-        skip = 0
-        take = 200
-        more_data = True
-        session = create_session()
-
-        while more_data:
-            batch = fetch_results(
-                skip=skip,
-                take=take,
-                last_update_start=formatted_date_start,
-                last_update_end=formatted_date_end,
-                session=session
-            )
-
-            if batch:
-                listings.extend(batch)
-                skip += take
-                if len(batch) < take:
-                    more_data = False
-            else:
+    :param formatted_date_start: Start date in MM/DD/YYYY format.
+    :param formatted_date_end: End date in MM/DD/YYYY format.
+    :return: List of listings for the date range.
+    """
+    listings = []
+    skip = 0
+    take = 200
+    more_data = True
+    session = create_session()  # Each thread uses its own session
+    while more_data:
+        batch = fetch_results(
+            skip=skip,
+            take=take,
+            last_update_start=formatted_date_start,
+            last_update_end=formatted_date_end,
+            session=session
+        )
+        if batch:
+            listings.extend(batch)
+            skip += take
+            if len(batch) < take:
                 more_data = False
-
-            if progress_callback:
-                progress_callback(
-                    min(1.0, skip / (skip + take)),
-                    f"Fetched {len(listings)} listings for {formatted_date_start} to {formatted_date_end}"
-                )
-
-        return listings
-
-    except Exception as e:
-        logging.error(f"Error in fetch_all_pages_for_date_range: {str(e)}")
-        return []
+        else:
+            more_data = False
+    return listings
 
 def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None):
-    """Retrieve all listings by paginating through the API."""
-    try:
-        all_results = []
-        date_ranges = []
+    """
+    Retrieve all listings by paginating through the API based on specified date ranges.
 
-        current_end_date = start_date
-        current_start_date = start_date - delta
-        iteration = 0
-        max_iterations = 1000  # Safety limit
+    :param start_date: The most recent date to start fetching listings.
+    :param end_date: The oldest date to stop fetching listings.
+    :param delta: The time delta to decrement each iteration (default is 4 days).
+    :return: List of all fetched listings.
+    """
+    all_results = []
+    date_ranges = []
 
-        while current_start_date >= end_date and iteration < max_iterations:
-            formatted_date_start = current_start_date.strftime('%m/%d/%Y')
-            formatted_date_end = current_end_date.strftime('%m/%d/%Y')
-            date_ranges.append((formatted_date_start, formatted_date_end))
+    current_end_date = start_date
+    current_start_date = start_date - delta
+    max_iterations = 1000  # Prevent infinite loops; adjust as needed
+    iteration = 0
 
-            current_end_date = current_start_date - timedelta(days=1)
-            current_start_date = current_end_date - delta
-            iteration += 1
+    while current_start_date >= end_date and iteration < max_iterations:
+        formatted_date_start = current_start_date.strftime('%m/%d/%Y')
+        formatted_date_end = current_end_date.strftime('%m/%d/%Y')
+        date_ranges.append((formatted_date_start, formatted_date_end))
 
-        logging.info(f"Processing {len(date_ranges)} date ranges")
-        max_workers = 3
+        current_end_date = current_start_date - timedelta(days=1)
+        current_start_date = current_end_date - delta
+        iteration += 1
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(fetch_all_pages_for_date_range, dr[0], dr[1], progress_callback): dr for dr in date_ranges}
+    logging.info(f"Total date ranges to process: {len(date_ranges)}")
 
-            completed = 0
-            total = len(futures)
+    max_workers = 3  # Adjust based on your system's capability
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(fetch_all_pages_for_date_range, dr[0], dr[1]): dr
+            for dr in date_ranges
+        }
 
-            for future in as_completed(futures):
-                try:
-                    listings = future.result()
-                    if listings:
-                        all_results.extend(listings)
-                    completed += 1
+        for future in as_completed(futures):
+            date_range = futures[future]
+            try:
+                listings = future.result()
+                if listings:
+                    all_results.extend(listings)
+                    logging.info(
+                        f"Fetched {len(listings)} listings for date range {date_range}. Total so far: {len(all_results)}"
+                    )
+                else:
+                    logging.info(
+                        f"No listings found for date range {date_range}.")
+            except Exception as e:
+                logging.error(
+                    f"Error fetching data for date range {date_range}: {e}")
 
-                    if progress_callback:
-                        progress_callback(completed / total, f"Processing batch {completed} of {total}")
-
-                except Exception as e:
-                    logging.error(f"Error in batch processing: {str(e)}")
-
-        logging.info(f"Successfully fetched total of {len(all_results)} listings")
-        return all_results
-
-    except Exception as e:
-        logging.error(f"Error in paginate_results: {str(e)}")
-        return []
+    logging.info(f"Total listings fetched: {len(all_results)}")
+    return all_results
