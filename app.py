@@ -284,5 +284,43 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                 )
                 st.plotly_chart(fig_style_pie, use_container_width=True)
 
+    # Neighborhoods Distribution
+    if 'neighborhoods' in df.columns and 'city' in df.columns:
+        st.header("Neighborhoods Distribution by City")
+
+        # Get unique cities
+        cities = sorted(filtered_df['city'].unique())
+
+        # Create rows of two columns for each pair of cities
+        for i in range(0, len(cities), 2):
+            col1, col2 = st.columns(2)
+
+            # First city in the pair
+            with col1:
+                city = cities[i]
+                city_data = filtered_df[filtered_df['city'] == city]
+                if not city_data.empty and 'neighborhoods' in city_data.columns:
+                    neighborhood_counts = city_data['neighborhoods'].value_counts()
+                    fig = px.pie(
+                        values=neighborhood_counts.values,
+                        names=neighborhood_counts.index,
+                        title=f"Neighborhoods in {city}"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+            # Second city in the pair (if exists)
+            with col2:
+                if i + 1 < len(cities):
+                    city = cities[i + 1]
+                    city_data = filtered_df[filtered_df['city'] == city]
+                    if not city_data.empty and 'neighborhoods' in city_data.columns:
+                        neighborhood_counts = city_data['neighborhoods'].value_counts()
+                        fig = px.pie(
+                            values=neighborhood_counts.values,
+                            names=neighborhood_counts.index,
+                            title=f"Neighborhoods in {city}"
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
 elif not st.session_state.scraping_complete:
     st.info("Select a date range and click 'Start Scraping' to begin data collection.")
