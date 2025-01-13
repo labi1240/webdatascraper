@@ -94,3 +94,13 @@
 2025-01-13 15:08:27,990 - INFO - Total date ranges to process: 1
 2025-01-13 15:08:28,658 - INFO - Fetched 59 listings for date range ('01/09/2025', '01/13/2025'). Total so far: 59
 2025-01-13 15:08:28,660 - INFO - Total listings fetched: 59
+2025-01-13 15:12:59,379 - INFO - Total date ranges to process: 1
+2025-01-13 15:13:00,023 - INFO - Fetched 59 listings for date range ('01/09/2025', '01/13/2025'). Total so far: 59
+2025-01-13 15:13:00,033 - INFO - Total listings fetched: 59
+2025-01-13 15:13:00,137 - INFO - Data saved to cache: cache/20250113_20250106.json
+2025-01-13 15:13:51,826 - INFO - Data loaded from cache: cache/20250113_20250106.json
+2025-01-13 15:13:51,826 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
+2025-01-13 15:14:03,711 - INFO - Data loaded from cache: cache/20250113_20250106.json
+2025-01-13 15:14:03,711 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
+2025-01-13 15:14:20,062 - INFO - Data loaded from cache: cache/20250113_20250106.json
+2025-01-13 15:14:20,063 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00

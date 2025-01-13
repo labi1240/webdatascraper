@@ -1,5 +1,5 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 from datetime import datetime, timedelta
 import json
 from scraper import paginate_results
@@ -22,6 +22,46 @@ if 'progress' not in st.session_state:
     st.session_state.progress = 0
 if 'use_cache' not in st.session_state:
     st.session_state.use_cache = True
+if 'client_data' not in st.session_state:
+    st.session_state.client_data = None
+
+def normalize_address(address):
+    """Normalize address for comparison by removing common variations."""
+    if pd.isna(address):
+        return ""
+    address = str(address).lower()
+    # Remove common terms and extra spaces
+    replacements = [
+        ('avenue', 'ave'),
+        ('street', 'st'),
+        ('road', 'rd'),
+        ('drive', 'dr'),
+        ('boulevard', 'blvd'),
+        ('court', 'ct'),
+        (',', ''),
+        ('.', ''),
+        ('  ', ' ')
+    ]
+    for old, new in replacements:
+        address = address.replace(old, new)
+    return address.strip()
+
+def find_matching_terminated_listings(terminated_df, client_df, address_column='streetAddress'):
+    """Find terminated listings that match client addresses."""
+    # Normalize addresses in both dataframes
+    terminated_df['normalized_address'] = terminated_df[address_column].apply(normalize_address)
+    client_df['normalized_address'] = client_df[address_column].apply(normalize_address)
+
+    # Find matches
+    matches = pd.merge(
+        terminated_df,
+        client_df,
+        on='normalized_address',
+        how='inner',
+        suffixes=('_terminated', '_client')
+    )
+
+    return matches
 
 def run_scraper():
     """Execute the scraping process with the selected date range."""
@@ -96,6 +136,17 @@ with st.sidebar:
         help="When enabled, previously scraped data will be reused for the same date range"
     )
 
+    # Client data upload
+    st.header("Client Data")
+    uploaded_file = st.file_uploader("Upload Client Data (CSV)", type=['csv'])
+    if uploaded_file is not None:
+        try:
+            client_df = pd.read_csv(uploaded_file)
+            st.session_state.client_data = client_df
+            st.success(f"Loaded {len(client_df)} client records")
+        except Exception as e:
+            st.error(f"Error loading client data: {str(e)}")
+
     # Start scraping button
     if st.button("Start Scraping", type="primary"):
         run_scraper()
@@ -103,6 +154,24 @@ with st.sidebar:
 # Main content area
 if st.session_state.scraping_complete and st.session_state.data is not None:
     df = st.session_state.data
+
+    # Show comparison with client data if available
+    if st.session_state.client_data is not None:
+        st.header("Matching Terminated Listings")
+        matches = find_matching_terminated_listings(df, st.session_state.client_data)
+
+        if len(matches) > 0:
+            st.warning(f"Found {len(matches)} terminated listings matching your client addresses!")
+            st.dataframe(
+                matches[[
+                    'streetAddress', 'city', 'price', 'originalListPrice',
+                    'daysOnMarket', 'status', 'typeName'
+                ]],
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            st.success("No terminated listings found matching your client addresses.")
 
     # Data overview
     st.header("Data Overview")
