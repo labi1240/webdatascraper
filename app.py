@@ -20,6 +20,8 @@ if 'data' not in st.session_state:
     st.session_state.data = None
 if 'progress' not in st.session_state:
     st.session_state.progress = 0
+if 'use_cache' not in st.session_state:
+    st.session_state.use_cache = True
 
 def run_scraper():
     """Execute the scraping process with the selected date range."""
@@ -34,11 +36,12 @@ def run_scraper():
         start_date = datetime.combine(st.session_state.start_date, datetime.min.time())
         end_date = datetime.combine(st.session_state.end_date, datetime.min.time())
 
-        # Execute scraping
+        # Execute scraping with cache control
         all_data = paginate_results(
             start_date=end_date,  # Reversed because we want newer data first
             end_date=start_date,
-            progress_callback=lambda p, msg: utils.update_progress(p, msg, progress_bar, status_text)
+            progress_callback=lambda p, msg: utils.update_progress(p, msg, progress_bar, status_text),
+            use_cache=st.session_state.use_cache
         )
 
         if all_data:
@@ -85,6 +88,13 @@ with st.sidebar:
             datetime.now(),
             key="end_date"
         )
+
+    # Add cache control
+    st.session_state.use_cache = st.checkbox(
+        "Use cached data when available",
+        value=True,
+        help="When enabled, previously scraped data will be reused for the same date range"
+    )
 
     # Start scraping button
     if st.button("Start Scraping", type="primary"):

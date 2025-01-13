@@ -1,3 +1,4 @@
+import os
 import requests
 import json
 from datetime import datetime, timedelta
@@ -17,6 +18,42 @@ logging.basicConfig(
     ]
 )
 
+# Create cache directory if it doesn't exist
+CACHE_DIR = "cache"
+if not os.path.exists(CACHE_DIR):
+    os.makedirs(CACHE_DIR)
+
+def get_cache_key(date_start, date_end):
+    """Generate a cache key for the given date range."""
+    return f"{date_start}_{date_end}"
+
+def get_cache_file_path(cache_key):
+    """Get the file path for a cache key."""
+    return os.path.join(CACHE_DIR, f"{cache_key}.json")
+
+def save_to_cache(cache_key, data):
+    """Save data to cache."""
+    cache_file = get_cache_file_path(cache_key)
+    try:
+        with open(cache_file, 'w') as f:
+            json.dump(data, f)
+        logging.info(f"Data saved to cache: {cache_file}")
+    except Exception as e:
+        logging.error(f"Error saving to cache: {e}")
+
+def load_from_cache(cache_key):
+    """Load data from cache if available."""
+    cache_file = get_cache_file_path(cache_key)
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r') as f:
+                data = json.load(f)
+            logging.info(f"Data loaded from cache: {cache_file}")
+            return data
+        except Exception as e:
+            logging.error(f"Error loading from cache: {e}")
+    return None
+
 # Define base parameters
 base_params = {
     'availability': 'U',
@@ -35,7 +72,7 @@ base_params = {
     '$orderby': 'daysOnMarket desc',
     '$output': 'list',
     '$select': [
-        'status', 'latitude', 'neighborhoods', 'originalListPrice', 
+        'status', 'latitude', 'neighborhoods', 'originalListPrice',
         'priceLow', 'postalCode', 'price', 'class', 'modified',
         'displayStatus', 'typeName', 'longitude', 'parcelID',
         'bathrooms', 'city', 'daysOnMarket', 'bedrooms', 'listingID',
@@ -167,15 +204,31 @@ def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end):
             more_data = False
     return listings
 
-def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None):
+def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None, use_cache=True):
     """
     Retrieve all listings by paginating through the API based on specified date ranges.
+    Now with caching support.
 
     :param start_date: The most recent date to start fetching listings.
     :param end_date: The oldest date to stop fetching listings.
     :param delta: The time delta to decrement each iteration (default is 4 days).
+    :param progress_callback: Optional callback for progress updates.
+    :param use_cache: Whether to use cached data (default True).
     :return: List of all fetched listings.
     """
+    # Generate cache key for the entire date range
+    cache_key = get_cache_key(
+        start_date.strftime('%Y%m%d'),
+        end_date.strftime('%Y%m%d')
+    )
+
+    # Try to load from cache first if caching is enabled
+    if use_cache:
+        cached_data = load_from_cache(cache_key)
+        if cached_data is not None:
+            logging.info(f"Using cached data for date range {start_date} to {end_date}")
+            return cached_data
+
     all_results = []
     date_ranges = []
 
@@ -219,4 +272,9 @@ def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_cal
                     f"Error fetching data for date range {date_range}: {e}")
 
     logging.info(f"Total listings fetched: {len(all_results)}")
+
+    # Save results to cache if data was fetched
+    if all_results and use_cache:
+        save_to_cache(cache_key, all_results)
+
     return all_results
