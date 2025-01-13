@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import json
 from scraper import paginate_results
 import utils
+import plotly.express as px
 
 # Page config
 st.set_page_config(
@@ -238,13 +239,25 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                 if 'city' in df.columns:
                     st.subheader("Average Price by City")
                     city_prices = filtered_df.groupby('city')['price'].mean().round(2)
-                    st.bar_chart(city_prices)
+                    fig_city = px.bar(
+                        x=city_prices.index,
+                        y=city_prices.values,
+                        title="Average Price by City",
+                        labels={'x': 'City', 'y': 'Average Price ($)'}
+                    )
+                    st.plotly_chart(fig_city, use_container_width=True)
 
             with col2:
                 if 'typeName' in df.columns:
                     st.subheader("Average Price by Property Type")
                     type_prices = filtered_df.groupby('typeName')['price'].mean().round(2)
-                    st.bar_chart(type_prices)
+                    fig_type = px.bar(
+                        x=type_prices.index,
+                        y=type_prices.values,
+                        title="Average Price by Property Type",
+                        labels={'x': 'Property Type', 'y': 'Average Price ($)'}
+                    )
+                    st.plotly_chart(fig_type, use_container_width=True)
 
     # Property Distribution
     with st.expander("Property Distribution", expanded=True):
@@ -253,13 +266,23 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
             if 'typeName' in df.columns:
                 st.subheader("Property Types Distribution")
                 type_counts = filtered_df['typeName'].value_counts()
-                st.pie_chart(type_counts)
+                fig_type_pie = px.pie(
+                    values=type_counts.values,
+                    names=type_counts.index,
+                    title="Property Types Distribution"
+                )
+                st.plotly_chart(fig_type_pie, use_container_width=True)
 
         with col2:
             if 'style' in df.columns:
                 st.subheader("Property Styles Distribution")
                 style_counts = filtered_df['style'].value_counts()
-                st.pie_chart(style_counts)
+                fig_style_pie = px.pie(
+                    values=style_counts.values,
+                    names=style_counts.index,
+                    title="Property Styles Distribution"
+                )
+                st.plotly_chart(fig_style_pie, use_container_width=True)
 
 elif not st.session_state.scraping_complete:
     st.info("Select a date range and click 'Start Scraping' to begin data collection.")

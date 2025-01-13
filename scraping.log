@@ -81,3 +81,10 @@
 
 2025-01-13 15:01:26,248 - ERROR - Failed to authenticate session
 2025-01-13 15:01:26,250 - INFO - Successfully fetched total of 0 listings
+2025-01-13 15:02:09,986 - INFO - Total date ranges to process: 2
+2025-01-13 15:02:11,083 - INFO - Fetched 76 listings for date range ('01/01/2025', '01/05/2025'). Total so far: 76
+2025-01-13 15:02:11,392 - INFO - Fetched 128 listings for date range ('01/06/2025', '01/10/2025'). Total so far: 204
+2025-01-13 15:02:11,394 - INFO - Total listings fetched: 204
+2025-01-13 15:02:28,902 - INFO - Total date ranges to process: 1
+2025-01-13 15:02:29,579 - INFO - Fetched 59 listings for date range ('01/09/2025', '01/13/2025'). Total so far: 59
+2025-01-13 15:02:29,579 - INFO - Total listings fetched: 59
