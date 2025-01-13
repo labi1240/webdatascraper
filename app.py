@@ -341,6 +341,13 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                         title="Average Price by City",
                         labels={'x': 'City', 'y': 'Average Price ($)'}
                     )
+                    # Update layout for better visibility
+                    fig_city.update_layout(
+                        title_x=0.5,
+                        yaxis_tickformat='$,.0f',
+                        height=400,
+                        margin=dict(t=30)
+                    )
                     st.plotly_chart(fig_city, use_container_width=True)
 
             with col2:
@@ -352,6 +359,13 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                         y=type_prices.values,
                         title="Average Price by Property Type",
                         labels={'x': 'Property Type', 'y': 'Average Price ($)'}
+                    )
+                    # Update layout for better visibility
+                    fig_type.update_layout(
+                        title_x=0.5,
+                        yaxis_tickformat='$,.0f',
+                        height=400,
+                        margin=dict(t=30)
                     )
                     st.plotly_chart(fig_type, use_container_width=True)
 
@@ -367,6 +381,11 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                     names=type_counts.index,
                     title="Property Types Distribution"
                 )
+                fig_type_pie.update_layout(
+                    title_x=0.5,
+                    height=400,
+                    margin=dict(t=30)
+                )
                 st.plotly_chart(fig_type_pie, use_container_width=True)
 
         with col2:
@@ -377,6 +396,11 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                     values=style_counts.values,
                     names=style_counts.index,
                     title="Property Styles Distribution"
+                )
+                fig_style_pie.update_layout(
+                    title_x=0.5,
+                    height=400,
+                    margin=dict(t=30)
                 )
                 st.plotly_chart(fig_style_pie, use_container_width=True)
 
