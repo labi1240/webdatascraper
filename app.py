@@ -24,6 +24,8 @@ if 'use_cache' not in st.session_state:
     st.session_state.use_cache = True
 if 'client_data' not in st.session_state:
     st.session_state.client_data = None
+if 'address_column' not in st.session_state:
+    st.session_state.address_column = None
 
 def normalize_address(address):
     """Normalize address for comparison by removing common variations."""
@@ -46,10 +48,10 @@ def normalize_address(address):
         address = address.replace(old, new)
     return address.strip()
 
-def find_matching_terminated_listings(terminated_df, client_df, address_column='streetAddress'):
+def find_matching_terminated_listings(terminated_df, client_df, address_column):
     """Find terminated listings that match client addresses."""
     # Normalize addresses in both dataframes
-    terminated_df['normalized_address'] = terminated_df[address_column].apply(normalize_address)
+    terminated_df['normalized_address'] = terminated_df['streetAddress'].apply(normalize_address)
     client_df['normalized_address'] = client_df[address_column].apply(normalize_address)
 
     # Find matches
@@ -143,6 +145,17 @@ with st.sidebar:
         try:
             client_df = pd.read_csv(uploaded_file)
             st.session_state.client_data = client_df
+
+            # Let user select the address column
+            st.subheader("Column Mapping")
+            address_columns = client_df.columns.tolist()
+            st.session_state.address_column = st.selectbox(
+                "Select the column containing property addresses",
+                options=address_columns,
+                index=address_columns.index("Address 1 - Street") if "Address 1 - Street" in address_columns else 0,
+                help="Choose the column that contains the property street addresses"
+            )
+
             st.success(f"Loaded {len(client_df)} client records")
         except Exception as e:
             st.error(f"Error loading client data: {str(e)}")
@@ -156,9 +169,9 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
     df = st.session_state.data
 
     # Show comparison with client data if available
-    if st.session_state.client_data is not None:
+    if st.session_state.client_data is not None and st.session_state.address_column is not None:
         st.header("Matching Terminated Listings")
-        matches = find_matching_terminated_listings(df, st.session_state.client_data)
+        matches = find_matching_terminated_listings(df, st.session_state.client_data, st.session_state.address_column)
 
         if len(matches) > 0:
             st.warning(f"Found {len(matches)} terminated listings matching your client addresses!")
