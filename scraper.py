@@ -40,14 +40,13 @@ base_params = {
         'displayStatus', 'typeName', 'longitude', 'parcelID',
         'bathrooms', 'city', 'daysOnMarket', 'bedrooms', 'listingID',
         'pricePerSquareFoot', 'streetAddress', 'style', 'streetName',
-        'streetNumber', 'saleOrRent', 'squareFeetText', 'squareFeet',
-        'displayAddressYN', 'listPrice', 'district', 'currency'
+        'streetNumber', 'saleOrRent', 'squareFeetText', 'squareFeet'
     ],
     '$imageSizes[0]': '150',
     '$imageSizes[1]': '600',
     '$project': 'summary',
     '$skip': '0',
-    '$take': '200',
+    '$take': '200'
 }
 
 def create_session():
@@ -57,11 +56,23 @@ def create_session():
         total=5,
         backoff_factor=1,
         status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET"],
+        allowed_methods=["GET"]
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('https://', adapter)
     session.mount('http://', adapter)
+
+    # Add required headers
+    session.headers.update({
+        'accept': 'application/json',
+        'accept-language': 'en-US,en;q=0.9',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'referer': 'https://app.realmmlp.ca/s',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"'
+    })
+
     return session
 
 def fetch_results(skip, take, last_update_start, last_update_end, session):
@@ -76,11 +87,29 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
         response = session.get(
             'https://app.realmmlp.ca/search',
             params=params,
-            timeout=10
+            timeout=30
         )
-        response.raise_for_status()
-        data = response.json()
+
+        # Log the response details for debugging
+        logging.info(f"Request URL: {response.url}")
+        logging.info(f"Response Status Code: {response.status_code}")
+
+        if response.status_code != 200:
+            logging.error(f"Error response: {response.text}")
+            return []
+
+        try:
+            data = response.json()
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON Decode Error: {str(e)}")
+            logging.error(f"Response Content: {response.text[:500]}")  # Log first 500 chars of response
+            return []
+
         listings = data.get('searchResults', {}).get('data', [])
+
+        if not listings:
+            logging.warning(f"No listings found in response. Response: {data}")
+            return []
 
         # Process each listing to format the data
         for listing in listings:
@@ -89,81 +118,99 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
             if 'squareFeet' in listing:
                 listing['squareFeet'] = listing['squareFeet'].replace(',', '')
 
+        logging.info(f"Successfully fetched {len(listings)} listings")
         return listings
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request Error: {str(e)}")
+        return []
     except Exception as e:
-        logging.error(f"Error fetching results: {str(e)}")
+        logging.error(f"Unexpected Error: {str(e)}")
         return []
 
 def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end, progress_callback=None):
     """Fetch all pages of listings for a given date range."""
-    listings = []
-    skip = 0
-    take = 200
-    more_data = True
-    session = create_session()
+    try:
+        listings = []
+        skip = 0
+        take = 200
+        more_data = True
+        session = create_session()
 
-    while more_data:
-        batch = fetch_results(
-            skip=skip,
-            take=take,
-            last_update_start=formatted_date_start,
-            last_update_end=formatted_date_end,
-            session=session
-        )
-
-        if batch:
-            listings.extend(batch)
-            skip += take
-            if len(batch) < take:
-                more_data = False
-        else:
-            more_data = False
-
-        if progress_callback:
-            progress_callback(
-                min(1.0, skip / (skip + take)),
-                f"Fetched {len(listings)} listings for {formatted_date_start} to {formatted_date_end}"
+        while more_data:
+            batch = fetch_results(
+                skip=skip,
+                take=take,
+                last_update_start=formatted_date_start,
+                last_update_end=formatted_date_end,
+                session=session
             )
 
-    return listings
+            if batch:
+                listings.extend(batch)
+                skip += take
+                if len(batch) < take:
+                    more_data = False
+            else:
+                more_data = False
+
+            if progress_callback:
+                progress_callback(
+                    min(1.0, skip / (skip + take)),
+                    f"Fetched {len(listings)} listings for {formatted_date_start} to {formatted_date_end}"
+                )
+
+        return listings
+
+    except Exception as e:
+        logging.error(f"Error in fetch_all_pages_for_date_range: {str(e)}")
+        return []
 
 def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None):
     """Retrieve all listings by paginating through the API."""
-    all_results = []
-    date_ranges = []
+    try:
+        all_results = []
+        date_ranges = []
 
-    current_end_date = start_date
-    current_start_date = start_date - delta
-    iteration = 0
-    max_iterations = 1000
+        current_end_date = start_date
+        current_start_date = start_date - delta
+        iteration = 0
+        max_iterations = 1000  # Safety limit
 
-    while current_start_date >= end_date and iteration < max_iterations:
-        formatted_date_start = current_start_date.strftime('%m/%d/%Y')
-        formatted_date_end = current_end_date.strftime('%m/%d/%Y')
-        date_ranges.append((formatted_date_start, formatted_date_end))
+        while current_start_date >= end_date and iteration < max_iterations:
+            formatted_date_start = current_start_date.strftime('%m/%d/%Y')
+            formatted_date_end = current_end_date.strftime('%m/%d/%Y')
+            date_ranges.append((formatted_date_start, formatted_date_end))
 
-        current_end_date = current_start_date - timedelta(days=1)
-        current_start_date = current_end_date - delta
-        iteration += 1
+            current_end_date = current_start_date - timedelta(days=1)
+            current_start_date = current_end_date - delta
+            iteration += 1
 
-    max_workers = 3
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(fetch_all_pages_for_date_range, dr[0], dr[1], progress_callback): dr for dr in date_ranges}
+        logging.info(f"Processing {len(date_ranges)} date ranges")
+        max_workers = 3
 
-        completed = 0
-        total = len(futures)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(fetch_all_pages_for_date_range, dr[0], dr[1], progress_callback): dr for dr in date_ranges}
 
-        for future in as_completed(futures):
-            try:
-                listings = future.result()
-                if listings:
-                    all_results.extend(listings)
-                completed += 1
+            completed = 0
+            total = len(futures)
 
-                if progress_callback:
-                    progress_callback(completed / total, f"Processing batch {completed} of {total}")
+            for future in as_completed(futures):
+                try:
+                    listings = future.result()
+                    if listings:
+                        all_results.extend(listings)
+                    completed += 1
 
-            except Exception as e:
-                logging.error(f"Error in batch processing: {str(e)}")
+                    if progress_callback:
+                        progress_callback(completed / total, f"Processing batch {completed} of {total}")
 
-    return all_results
+                except Exception as e:
+                    logging.error(f"Error in batch processing: {str(e)}")
+
+        logging.info(f"Successfully fetched total of {len(all_results)} listings")
+        return all_results
+
+    except Exception as e:
+        logging.error(f"Error in paginate_results: {str(e)}")
+        return []
