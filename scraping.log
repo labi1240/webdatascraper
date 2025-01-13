@@ -108,3 +108,18 @@
 2025-01-13 15:36:42,796 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
 2025-01-13 15:38:33,697 - INFO - Data loaded from cache: cache/20250113_20250106.json
 2025-01-13 15:38:33,699 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
+2025-01-13 15:40:06,583 - INFO - Total date ranges to process: 12
+2025-01-13 15:40:07,709 - INFO - Fetched 60 listings for date range ('01/09/2025', '01/13/2025'). Total so far: 60
+2025-01-13 15:40:08,151 - INFO - Fetched 91 listings for date range ('12/30/2024', '01/03/2025'). Total so far: 151
+2025-01-13 15:40:08,218 - INFO - Fetched 22 listings for date range ('12/25/2024', '12/29/2024'). Total so far: 173
+2025-01-13 15:40:08,757 - INFO - Fetched 93 listings for date range ('01/04/2025', '01/08/2025'). Total so far: 266
+2025-01-13 15:40:09,014 - INFO - Fetched 77 listings for date range ('12/15/2024', '12/19/2024'). Total so far: 343
+2025-01-13 15:40:09,075 - INFO - Fetched 61 listings for date range ('12/20/2024', '12/24/2024'). Total so far: 404
+2025-01-13 15:40:09,756 - INFO - Fetched 71 listings for date range ('12/05/2024', '12/09/2024'). Total so far: 475
+2025-01-13 15:40:10,208 - INFO - Fetched 106 listings for date range ('12/10/2024', '12/14/2024'). Total so far: 581
+2025-01-13 15:40:11,172 - INFO - Fetched 122 listings for date range ('11/25/2024', '11/29/2024'). Total so far: 703
+2025-01-13 15:40:11,422 - INFO - Fetched 99 listings for date range ('11/30/2024', '12/04/2024'). Total so far: 802
+2025-01-13 15:40:11,570 - INFO - Fetched 96 listings for date range ('11/20/2024', '11/24/2024'). Total so far: 898
+2025-01-13 15:40:12,188 - INFO - Fetched 116 listings for date range ('11/15/2024', '11/19/2024'). Total so far: 1014
+2025-01-13 15:40:12,192 - INFO - Total listings fetched: 1014
+2025-01-13 15:40:14,564 - INFO - Data saved to cache: cache/20250113_20241115.json

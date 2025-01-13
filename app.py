@@ -8,7 +8,7 @@ import plotly.express as px
 
 # Page config
 st.set_page_config(
-    page_title="Real Estate Data Scraper",
+    page_title="Team Arora - Real Estate Data Scraper",
     page_icon="🏠",
     layout="wide"
 )
@@ -114,6 +114,10 @@ st.title("🏠 Real Estate Data Scraper")
 
 # Sidebar for controls
 with st.sidebar:
+    # Add logo at the top of sidebar
+    st.image("attached_assets/team-arora-logo.png", width=200)
+    st.markdown("---")  # Add a separator line
+
     st.header("Scraping Controls")
 
     # Date selection
