@@ -17,30 +17,7 @@ logging.basicConfig(
     ]
 )
 
-# Define cookies and headers from original code
-cookies = {
-    '_ga': 'GA1.3.6299276.1729021923',
-    '_ga_1': 'GA1.1.6299276.1729021923',
-    '_gid': 'GA1.3.1792005162.1729112353',
-    '_gat': '1',
-    '_gat_1': '1',
-    's': 'eyJwYXNzcG9ydCI6eyJ1c2VyIjoiNTM3ZmE2ZWU1ZTU1OTlhODU1ZDJmODFiIn0sInMiOiJhYWQ5YmY5Zi03YmEzLTQxZGUtYTFjZS1jNGZkMWFjM2IyZWEiLCJub3ciOjI4ODE5OTQzLCJpIjo4MH0=',
-    's.sig': 'ASpJMzN-iA35W9KNclYWvG1ZwBs',
-    '_ga_G0XQP73LHV': 'GS1.1.1729193701.4.1.1729196603.21.1.1860857804',
-}
-
-headers = {
-    'accept': 'application/json',
-    'accept-language': 'en-US,en;q=0.9',
-    'baggage': 'sentry-environment=production,sentry-public_key=e9f1abedeae34f04a098c5c0ebb1737a,sentry-trace_id=4d885e178ee6450ab482343ccdd4e648,sentry-sample_rate=0.1,sentry-sampled=false',
-    'referer': 'https://app.realmmlp.ca/s',
-    'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-    'sec-ch-ua-mobile': '?1',
-    'sec-ch-ua-platform': '"Android"',
-    'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
-    'x-auth-userid': '537fa6ee5e5599a855d2f81b',
-}
-
+# Define base parameters
 base_params = {
     'availability': 'U',
     'geoAnd': 'Y',
@@ -57,20 +34,15 @@ base_params = {
     '$meta[isMapSearch]': 'true',
     '$orderby': 'daysOnMarket desc',
     '$output': 'list',
-    '$select[0]': 'streetAddress',
-    '$select[1]': 'city',
-    '$select[2]': 'bedrooms',
-    '$select[3]': 'bedroomsPossible',
-    '$select[4]': 'bathrooms',
-    '$select[5]': 'typeName',
-    '$select[6]': 'style',
-    '$select[7]': 'price',
-    '$select[8]': 'price',
-    '$select[9]': 'squareFeetText',
-    '$select[10]': 'squareFeet',
-    '$select[11]': 'status',
-    '$select[12]': 'daysOnMarket',
-    '$select[13]': 'listingID',
+    '$select': [
+        'status', 'latitude', 'neighborhoods', 'originalListPrice', 
+        'priceLow', 'postalCode', 'price', 'class', 'modified',
+        'displayStatus', 'typeName', 'longitude', 'parcelID',
+        'bathrooms', 'city', 'daysOnMarket', 'bedrooms', 'listingID',
+        'pricePerSquareFoot', 'streetAddress', 'style', 'streetName',
+        'streetNumber', 'saleOrRent', 'squareFeetText', 'squareFeet',
+        'displayAddressYN', 'listPrice', 'district', 'currency'
+    ],
     '$imageSizes[0]': '150',
     '$imageSizes[1]': '600',
     '$project': 'summary',
@@ -79,6 +51,7 @@ base_params = {
 }
 
 def create_session():
+    """Create a new session with retry strategy."""
     session = requests.Session()
     retry = Retry(
         total=5,
@@ -89,11 +62,10 @@ def create_session():
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('https://', adapter)
     session.mount('http://', adapter)
-    session.headers.update(headers)
-    session.cookies.update(cookies)
     return session
 
 def fetch_results(skip, take, last_update_start, last_update_end, session):
+    """Fetch a batch of listings from the API."""
     params = base_params.copy()
     params['$skip'] = str(skip)
     params['$take'] = str(take)
@@ -109,18 +81,27 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
         response.raise_for_status()
         data = response.json()
         listings = data.get('searchResults', {}).get('data', [])
+
+        # Process each listing to format the data
+        for listing in listings:
+            if 'price' in listing:
+                listing['priceFormatted'] = f"${listing['price']:,.2f}"
+            if 'squareFeet' in listing:
+                listing['squareFeet'] = listing['squareFeet'].replace(',', '')
+
         return listings
     except Exception as e:
         logging.error(f"Error fetching results: {str(e)}")
         return []
 
 def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end, progress_callback=None):
+    """Fetch all pages of listings for a given date range."""
     listings = []
     skip = 0
     take = 200
     more_data = True
     session = create_session()
-    
+
     while more_data:
         batch = fetch_results(
             skip=skip,
@@ -129,7 +110,7 @@ def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end, pro
             last_update_end=formatted_date_end,
             session=session
         )
-        
+
         if batch:
             listings.extend(batch)
             skip += take
@@ -137,16 +118,17 @@ def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end, pro
                 more_data = False
         else:
             more_data = False
-            
+
         if progress_callback:
             progress_callback(
                 min(1.0, skip / (skip + take)),
                 f"Fetched {len(listings)} listings for {formatted_date_start} to {formatted_date_end}"
             )
-            
+
     return listings
 
 def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None):
+    """Retrieve all listings by paginating through the API."""
     all_results = []
     date_ranges = []
 
@@ -167,20 +149,20 @@ def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_cal
     max_workers = 3
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(fetch_all_pages_for_date_range, dr[0], dr[1], progress_callback): dr for dr in date_ranges}
-        
+
         completed = 0
         total = len(futures)
-        
+
         for future in as_completed(futures):
             try:
                 listings = future.result()
                 if listings:
                     all_results.extend(listings)
                 completed += 1
-                
+
                 if progress_callback:
                     progress_callback(completed / total, f"Processing batch {completed} of {total}")
-                    
+
             except Exception as e:
                 logging.error(f"Error in batch processing: {str(e)}")
 

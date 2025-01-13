@@ -44,9 +44,11 @@ def run_scraper():
             # Convert to DataFrame for display
             df = pd.DataFrame(all_data)
 
-            # Clean up the data
-            if 'price' in df.columns:
-                df['price'] = pd.to_numeric(df['price'], errors='coerce')
+            # Clean up numerical columns
+            numeric_columns = ['price', 'originalListPrice', 'priceLow', 'squareFeet']
+            for col in numeric_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
 
             st.session_state.data = df
             st.session_state.scraping_complete = True
@@ -96,29 +98,30 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
     st.write(f"Total listings found: {len(df)}")
 
     # Filters
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if 'price' in df.columns:
-            price_range = st.slider(
-                "Price Range ($)",
-                float(df['price'].min()),
-                float(df['price'].max()),
-                (float(df['price'].min()), float(df['price'].max()))
-            )
-    with col2:
-        if 'city' in df.columns:
-            cities = st.multiselect(
-                "Cities",
-                options=sorted(df['city'].unique()),
-                default=sorted(df['city'].unique())
-            )
-    with col3:
-        if 'typeName' in df.columns:
-            property_types = st.multiselect(
-                "Property Types",
-                options=sorted(df['typeName'].unique()),
-                default=sorted(df['typeName'].unique())
-            )
+    with st.expander("Filters", expanded=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if 'price' in df.columns:
+                price_range = st.slider(
+                    "Price Range ($)",
+                    float(df['price'].min()),
+                    float(df['price'].max()),
+                    (float(df['price'].min()), float(df['price'].max()))
+                )
+        with col2:
+            if 'city' in df.columns:
+                cities = st.multiselect(
+                    "Cities",
+                    options=sorted(df['city'].unique()),
+                    default=sorted(df['city'].unique())
+                )
+        with col3:
+            if 'typeName' in df.columns:
+                property_types = st.multiselect(
+                    "Property Types",
+                    options=sorted(df['typeName'].unique()),
+                    default=sorted(df['typeName'].unique())
+                )
 
     # Filter the dataframe
     filtered_df = df.copy()
@@ -133,14 +136,28 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
     st.dataframe(
         filtered_df,
         column_config={
+            "status": st.column_config.TextColumn(
+                "Status",
+                help="Current status of the listing"
+            ),
+            "displayStatus": st.column_config.TextColumn(
+                "Display Status",
+                help="Display status of the listing"
+            ),
             "price": st.column_config.NumberColumn(
                 "Price",
                 format="$%d",
-                help="Property listing price"
+                help="Current listing price"
             ),
-            "daysOnMarket": st.column_config.NumberColumn(
-                "Days on Market",
-                help="Number of days the property has been listed"
+            "originalListPrice": st.column_config.NumberColumn(
+                "Original Price",
+                format="$%d",
+                help="Original listing price"
+            ),
+            "priceLow": st.column_config.NumberColumn(
+                "Price Low",
+                format="$%d",
+                help="Lowest price for the listing"
             ),
             "streetAddress": st.column_config.TextColumn(
                 "Address",
@@ -150,9 +167,17 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
                 "City",
                 help="Property city location"
             ),
+            "postalCode": st.column_config.TextColumn(
+                "Postal Code",
+                help="Property postal code"
+            ),
             "typeName": st.column_config.TextColumn(
                 "Property Type",
                 help="Type of property"
+            ),
+            "style": st.column_config.TextColumn(
+                "Style",
+                help="Property style"
             ),
             "bedrooms": st.column_config.NumberColumn(
                 "Beds",
@@ -161,6 +186,24 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
             "bathrooms": st.column_config.NumberColumn(
                 "Baths",
                 help="Number of bathrooms"
+            ),
+            "squareFeet": st.column_config.NumberColumn(
+                "Square Feet",
+                help="Property square footage"
+            ),
+            "daysOnMarket": st.column_config.NumberColumn(
+                "Days on Market",
+                help="Number of days the property has been listed"
+            ),
+            "latitude": st.column_config.NumberColumn(
+                "Latitude",
+                format="%.6f",
+                help="Property latitude coordinates"
+            ),
+            "longitude": st.column_config.NumberColumn(
+                "Longitude",
+                format="%.6f",
+                help="Property longitude coordinates"
             )
         },
         hide_index=True,
@@ -187,18 +230,36 @@ if st.session_state.scraping_complete and st.session_state.data is not None:
     # Visualizations
     st.header("Data Visualization")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if 'city' in df.columns and 'price' in df.columns:
-            st.subheader("Average Price by City")
-            city_prices = filtered_df.groupby('city')['price'].mean().round(2)
-            st.bar_chart(city_prices)
+    # Price Analysis
+    if 'price' in df.columns:
+        with st.expander("Price Analysis", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                if 'city' in df.columns:
+                    st.subheader("Average Price by City")
+                    city_prices = filtered_df.groupby('city')['price'].mean().round(2)
+                    st.bar_chart(city_prices)
 
-    with col2:
-        if 'typeName' in df.columns:
-            st.subheader("Property Types Distribution")
-            type_counts = filtered_df['typeName'].value_counts()
-            st.pie_chart(type_counts)
+            with col2:
+                if 'typeName' in df.columns:
+                    st.subheader("Average Price by Property Type")
+                    type_prices = filtered_df.groupby('typeName')['price'].mean().round(2)
+                    st.bar_chart(type_prices)
+
+    # Property Distribution
+    with st.expander("Property Distribution", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            if 'typeName' in df.columns:
+                st.subheader("Property Types Distribution")
+                type_counts = filtered_df['typeName'].value_counts()
+                st.pie_chart(type_counts)
+
+        with col2:
+            if 'style' in df.columns:
+                st.subheader("Property Styles Distribution")
+                style_counts = filtered_df['style'].value_counts()
+                st.pie_chart(style_counts)
 
 elif not st.session_state.scraping_complete:
     st.info("Select a date range and click 'Start Scraping' to begin data collection.")
