@@ -125,3 +125,18 @@
 2025-01-13 15:40:14,564 - INFO - Data saved to cache: cache/20250113_20241115.json
 2025-01-13 16:22:50,189 - INFO - Data loaded from cache: cache/20250113_20250106.json
 2025-01-13 16:22:50,202 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
+2025-01-13 16:25:35,333 - INFO - Data loaded from cache: cache/20250113_20250106.json
+2025-01-13 16:25:35,334 - INFO - Using cached data for date range 2025-01-13 00:00:00 to 2025-01-06 00:00:00
+2025-03-27 15:10:42,937 - INFO - Total date ranges to process: 4
+2025-03-27 15:10:43,556 - INFO - Fetched 23 listings for date range ('03/22/2025', '03/23/2025'). Total so far: 23
+2025-03-27 15:10:43,866 - INFO - Fetched 65 listings for date range ('03/26/2025', '03/27/2025'). Total so far: 88
+2025-03-27 15:10:44,033 - INFO - Fetched 84 listings for date range ('03/24/2025', '03/25/2025'). Total so far: 172
+2025-03-27 15:10:44,926 - INFO - Fetched 64 listings for date range ('03/20/2025', '03/21/2025'). Total so far: 236
+2025-03-27 15:10:44,926 - INFO - Total listings fetched: 236
+2025-03-27 15:10:44,990 - INFO - Data saved to cache: cache/20250327_20250320.json
+2025-03-27 15:19:04,279 - INFO - Data loaded from cache: cache/20250327_20250320.json
+2025-03-27 15:19:04,279 - INFO - Using cached data for date range 2025-03-27 00:00:00 to 2025-03-20 00:00:00
+2025-03-27 15:27:01,426 - INFO - Data loaded from cache: cache/20250327_20250320.json
+2025-03-27 15:27:01,426 - INFO - Using cached data for date range 2025-03-27 00:00:00 to 2025-03-20 00:00:00
+2025-03-27 15:27:11,339 - INFO - Starting verification of 236 listings against current data as of 2025-03-27
+2025-03-27 15:27:11,340 - INFO - Verification will check if previously terminated listings are still terminated today

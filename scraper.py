@@ -12,24 +12,24 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("scraping.log"),
-        logging.StreamHandler()
-    ]
-)
+    handlers=[logging.FileHandler("scraping.log"),
+              logging.StreamHandler()])
 
 # Create cache directory if it doesn't exist
 CACHE_DIR = "cache"
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 
+
 def get_cache_key(date_start, date_end):
     """Generate a cache key for the given date range."""
     return f"{date_start}_{date_end}"
 
+
 def get_cache_file_path(cache_key):
     """Get the file path for a cache key."""
     return os.path.join(CACHE_DIR, f"{cache_key}.json")
+
 
 def save_to_cache(cache_key, data):
     """Save data to cache."""
@@ -40,6 +40,7 @@ def save_to_cache(cache_key, data):
         logging.info(f"Data saved to cache: {cache_file}")
     except Exception as e:
         logging.error(f"Error saving to cache: {e}")
+
 
 def load_from_cache(cache_key):
     """Load data from cache if available."""
@@ -54,37 +55,59 @@ def load_from_cache(cache_key):
             logging.error(f"Error loading from cache: {e}")
     return None
 
+
 # Define base parameters
 base_params = {
-    'availability': 'U',
-    'geoAnd': 'Y',
-    'unavailableDate': '>=01/1/2024',
-    'area': 'Peel',
-    'status': 'TER',
-    'district[0]': 'Brampton',
-    'district[1]': 'Mississauga',
-    'class': 'FREE',
-    'saleOrRent': 'SALE',
-    '$gid': 'treb',
-    'gid': 'TREB',
-    '$isMapSearch': 'true',
-    '$meta[isMapSearch]': 'true',
-    '$orderby': 'daysOnMarket desc',
-    '$output': 'list',
+    'availability':
+    'U',
+    'geoAnd':
+    'Y',
+    'unavailableDate':
+    '>=01/1/2024',
+    'area':
+    'Peel',
+    'status':
+    'TER',
+    'district[0]':
+    'Brampton',
+    'district[1]':
+    'Mississauga',
+    'class':
+    'FREE',
+    'saleOrRent':
+    'SALE',
+    '$gid':
+    'treb',
+    'gid':
+    'TREB',
+    '$isMapSearch':
+    'true',
+    '$meta[isMapSearch]':
+    'true',
+    '$orderby':
+    'daysOnMarket desc',
+    '$output':
+    'list',
     '$select': [
-        'status', 'latitude', 'neighborhoods', 'originalListPrice',
-        'priceLow', 'postalCode', 'price', 'class', 'modified',
-        'displayStatus', 'typeName', 'longitude', 'parcelID',
-        'bathrooms', 'city', 'daysOnMarket', 'bedrooms', 'listingID',
-        'pricePerSquareFoot', 'streetAddress', 'style', 'streetName',
-        'streetNumber', 'saleOrRent', 'squareFeetText', 'squareFeet'
+        'status', 'latitude', 'neighborhoods', 'originalListPrice', 'priceLow',
+        'postalCode', 'price', 'class', 'modified', 'displayStatus',
+        'typeName', 'longitude', 'parcelID', 'bathrooms', 'city',
+        'daysOnMarket', 'bedrooms', 'listingID', 'pricePerSquareFoot',
+        'streetAddress', 'style', 'streetName', 'streetNumber', 'saleOrRent',
+        'squareFeetText', 'squareFeet'
     ],
-    '$imageSizes[0]': '150',
-    '$imageSizes[1]': '600',
-    '$project': 'summary',
-    '$skip': '0',
-    '$take': '200'
+    '$imageSizes[0]':
+    '150',
+    '$imageSizes[1]':
+    '600',
+    '$project':
+    'summary',
+    '$skip':
+    '0',
+    '$take':
+    '200'
 }
+
 
 def create_session():
     """
@@ -106,33 +129,45 @@ def create_session():
     session.headers.update({
         'accept': 'application/json',
         'accept-language': 'en-US,en;q=0.9',
-        'baggage': 'sentry-environment=production,sentry-public_key=e9f1abedeae34f04a098c5c0ebb1737a,sentry-trace_id=4d885e178ee6450ab482343ccdd4e648,sentry-sample_rate=0.1,sentry-sampled=false',
+        'baggage':
+        'sentry-environment=production,sentry-public_key=e9f1abedeae34f04a098c5c0ebb1737a,sentry-trace_id=4d885e178ee6450ab482343ccdd4e648,sentry-sample_rate=0.1,sentry-sampled=false',
         'referer': 'https://app.realmmlp.ca/s',
-        'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+        'sec-ch-ua':
+        '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
         'sec-ch-ua-mobile': '?1',
         'sec-ch-ua-platform': '"Android"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
         'sentry-trace': '4d885e178ee6450ab482343ccdd4e648-ac8d50b4649cdddd-0',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
+        'user-agent':
+        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
         'x-auth-userid': '537fa6ee5e5599a855d2f81b',
         'x-requested-with': 'XMLHttpRequest'
     })
 
     # Add required cookies
     session.cookies.update({
-        '_ga': 'GA1.3.6299276.1729021923',
-        '_ga_1': 'GA1.1.6299276.1729021923',
-        '_gid': 'GA1.3.1792005162.1729112353',
-        '_gat': '1',
-        '_gat_1': '1',
-        's': 'eyJwYXNzcG9ydCI6eyJ1c2VyIjoiNTM3ZmE2ZWU1ZTU1OTlhODU1ZDJmODFiIn0sInMiOiJhYWQ5YmY5Zi03YmEzLTQxZGUtYTFjZS1jNGZkMWFjM2IyZWEiLCJub3ciOjI4ODE5OTQzLCJpIjo4MH0=',
-        's.sig': 'ASpJMzN-iA35W9KNclYWvG1ZwBs',
-        '_ga_G0XQP73LHV': 'GS1.1.1729193701.4.1.1729196603.21.1.1860857804'
+        '_ga':
+        'GA1.3.6299276.1729021923',
+        '_ga_1':
+        'GA1.1.6299276.1729021923',
+        '_gid':
+        'GA1.3.1792005162.1729112353',
+        '_gat':
+        '1',
+        '_gat_1':
+        '1',
+        's':
+        'eyJwYXNzcG9ydCI6eyJ1c2VyIjoiNTM3ZmE2ZWU1ZTU1OTlhODU1ZDJmODFiIn0sInMiOiJhYWQ5YmY5Zi03YmEzLTQxZGUtYTFjZS1jNGZkMWFjM2IyZWEiLCJub3ciOjI4ODE5OTQzLCJpIjo4MH0=',
+        's.sig':
+        'ASpJMzN-iA35W9KNclYWvG1ZwBs',
+        '_ga_G0XQP73LHV':
+        'GS1.1.1729193701.4.1.1729196603.21.1.1860857804'
     })
 
     return session
+
 
 def fetch_results(skip, take, last_update_start, last_update_end, session):
     """
@@ -152,11 +187,9 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
     params['lastUpdateDate[1]'] = f"<={last_update_end}"
 
     try:
-        response = session.get(
-            'https://app.realmmlp.ca/search',
-            params=params,
-            timeout=10
-        )
+        response = session.get('https://app.realmmlp.ca/search',
+                               params=params,
+                               timeout=10)
         response.raise_for_status()
         data = response.json()
         logging.debug(f"Response Data: {json.dumps(data, indent=4)}")
@@ -174,6 +207,7 @@ def fetch_results(skip, take, last_update_start, last_update_end, session):
         logging.error(f"Response content: {response.text}")
     return []
 
+
 def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end):
     """
     Fetch all pages of listings for a given date range.
@@ -188,13 +222,11 @@ def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end):
     more_data = True
     session = create_session()  # Each thread uses its own session
     while more_data:
-        batch = fetch_results(
-            skip=skip,
-            take=take,
-            last_update_start=formatted_date_start,
-            last_update_end=formatted_date_end,
-            session=session
-        )
+        batch = fetch_results(skip=skip,
+                              take=take,
+                              last_update_start=formatted_date_start,
+                              last_update_end=formatted_date_end,
+                              session=session)
         if batch:
             listings.extend(batch)
             skip += take
@@ -204,7 +236,12 @@ def fetch_all_pages_for_date_range(formatted_date_start, formatted_date_end):
             more_data = False
     return listings
 
-def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_callback=None, use_cache=True):
+
+def paginate_results(start_date,
+                     end_date,
+                     delta=timedelta(days=1),
+                     progress_callback=None,
+                     use_cache=True):
     """
     Retrieve all listings by paginating through the API based on specified date ranges.
     Now with caching support.
@@ -217,16 +254,15 @@ def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_cal
     :return: List of all fetched listings.
     """
     # Generate cache key for the entire date range
-    cache_key = get_cache_key(
-        start_date.strftime('%Y%m%d'),
-        end_date.strftime('%Y%m%d')
-    )
+    cache_key = get_cache_key(start_date.strftime('%Y%m%d'),
+                              end_date.strftime('%Y%m%d'))
 
     # Try to load from cache first if caching is enabled
     if use_cache:
         cached_data = load_from_cache(cache_key)
         if cached_data is not None:
-            logging.info(f"Using cached data for date range {start_date} to {end_date}")
+            logging.info(
+                f"Using cached data for date range {start_date} to {end_date}")
             return cached_data
 
     all_results = []
@@ -278,3 +314,122 @@ def paginate_results(start_date, end_date, delta=timedelta(days=4), progress_cal
         save_to_cache(cache_key, all_results)
 
     return all_results
+
+
+def verify_listing_status(listing_ids, progress_callback=None):
+    """
+    Verify the current status of previously scraped listings by checking against the API using today's date.
+    
+    :param listing_ids: List of listing IDs to verify.
+    :param progress_callback: Optional callback for progress updates.
+    :return: Dictionary mapping listing IDs to their current status information.
+    """
+    if not listing_ids:
+        return {}
+    
+    # Create a session for API requests
+    session = create_session()
+    
+    # Log verification process with today's date
+    today = datetime.now()
+    logging.info(f"Starting verification of {len(listing_ids)} listings against current data as of {today.strftime('%Y-%m-%d')}")
+    logging.info("Verification will check if previously terminated listings are still terminated today")
+    
+    # Prepare results dictionary
+    results = {}
+    total = len(listing_ids)
+    
+    # Process in batches to avoid overwhelming the API
+    batch_size = 20
+    batches = [listing_ids[i:i + batch_size] for i in range(0, len(listing_ids), batch_size)]
+    
+    for batch_index, batch in enumerate(batches):
+        # Update progress if callback provided
+        if progress_callback:
+            progress = (batch_index * batch_size) / total
+            progress_callback(progress, f"Verifying listings: {batch_index * batch_size}/{total}")
+        
+        # Process each listing ID in the batch
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(fetch_listing_status, listing_id, session): listing_id for listing_id in batch}
+            
+            for future in as_completed(futures):
+                listing_id = futures[future]
+                try:
+                    status_info = future.result()
+                    results[listing_id] = status_info
+                except Exception as e:
+                    logging.error(f"Error verifying listing {listing_id}: {e}")
+                    results[listing_id] = {"error": str(e), "verified": False}
+        
+        # Small delay to avoid rate limiting
+        time.sleep(0.5)
+    
+    # Final progress update
+    if progress_callback:
+        progress_callback(1.0, f"Verification complete: {total}/{total} listings checked")
+    
+    return results
+
+
+def fetch_listing_status(listing_id, session):
+    """
+    Fetch the current status of a single listing from the API using today's date.
+    
+    :param listing_id: The ID of the listing to check.
+    :param session: The requests session to use.
+    :return: Dictionary with status information.
+    """
+    try:
+        # Get today's date for verification
+        today = datetime.now()
+        today_formatted = today.strftime('%m/%d/%Y')
+        yesterday = today - timedelta(days=1)
+        yesterday_formatted = yesterday.strftime('%m/%d/%Y')
+        
+        # Modify base parameters to search for a specific listing ID with today's date range
+        params = {
+            'listingID': listing_id,
+            '$gid': 'treb',
+            'gid': 'TREB',
+            '$output': 'list',
+            'lastUpdateDate[0]': f">={yesterday_formatted}",  # Use yesterday to today for current status
+            'lastUpdateDate[1]': f"<={today_formatted}",
+            '$select': [
+                'status', 'displayStatus', 'modified', 'listingID',
+                'streetAddress', 'city', 'price', 'daysOnMarket'
+            ]
+        }
+        
+        response = session.get('https://app.realmmlp.ca/search', params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Extract listing data
+        listings = data.get('searchResults', {}).get('data', [])
+        
+        if listings:
+            # Listing found - return its current status
+            listing = listings[0]
+            return {
+                "found": True,
+                "status": listing.get('status'),
+                "displayStatus": listing.get('displayStatus'),
+                "modified": listing.get('modified'),
+                "price": listing.get('price'),
+                "daysOnMarket": listing.get('daysOnMarket'),
+                "verified": True,
+                "still_terminated": listing.get('status') == 'TER'
+            }
+        else:
+            # Listing not found - might have been completely removed or relisted with a new ID
+            return {
+                "found": False,
+                "status": "UNKNOWN",
+                "verified": True,
+                "still_terminated": False  # If we can't find it, we assume it's not terminated anymore
+            }
+            
+    except Exception as e:
+        logging.error(f"Error fetching status for listing {listing_id}: {e}")
+        return {"error": str(e), "verified": False}

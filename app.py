@@ -26,6 +26,10 @@ if 'client_data' not in st.session_state:
     st.session_state.client_data = None
 if 'address_column' not in st.session_state:
     st.session_state.address_column = None
+if 'verification_complete' not in st.session_state:
+    st.session_state.verification_complete = False
+if 'verified_data' not in st.session_state:
+    st.session_state.verified_data = None
 
 def normalize_address(address):
     """Normalize address for comparison by removing common variations."""
@@ -65,11 +69,64 @@ def find_matching_terminated_listings(terminated_df, client_df, address_column):
 
     return matches
 
+def verify_listings():
+    """Verify the current status of previously scraped listings."""
+    try:
+        if st.session_state.data is None or len(st.session_state.data) == 0:
+            st.error("No listings to verify. Please run the scraper first.")
+            return
+            
+        st.session_state.verification_complete = False
+        st.session_state.verified_data = None
+
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        # Get listing IDs from the scraped data
+        listing_ids = st.session_state.data['listingID'].tolist()
+        
+        # Import the verification function
+        from scraper import verify_listing_status
+        
+        # Verify the current status of listings
+        verification_results = verify_listing_status(
+            listing_ids=listing_ids,
+            progress_callback=lambda p, msg: utils.update_progress(p, msg, progress_bar, status_text)
+        )
+        
+        # Create a DataFrame with verification results
+        import pandas as pd
+        verified_data = []
+        
+        for listing_id, status_info in verification_results.items():
+            # Find the original listing in the scraped data
+            original_listing = st.session_state.data[st.session_state.data['listingID'] == listing_id].iloc[0].to_dict()
+            
+            # Add verification information
+            original_listing.update(status_info)
+            verified_data.append(original_listing)
+        
+        # Convert to DataFrame
+        verified_df = pd.DataFrame(verified_data)
+        
+        # Store in session state
+        st.session_state.verified_data = verified_df
+        st.session_state.verification_complete = True
+        
+        # Complete progress
+        progress_bar.progress(100)
+        status_text.text("Verification completed!")
+        
+    except Exception as e:
+        st.error(f"An error occurred during verification: {str(e)}")
+
 def run_scraper():
     """Execute the scraping process with the selected date range."""
     try:
         st.session_state.data = None
         st.session_state.scraping_complete = False
+        st.session_state.verification_complete = False
+        st.session_state.verified_data = None
 
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -115,7 +172,7 @@ st.title("🏠 Real Estate Data Scraper")
 # Sidebar for controls
 with st.sidebar:
     # Add logo at the top of sidebar
-    st.image("attached_assets/team-arora-logo.png", width=200)
+    st.image("attached_assets/team-arora-logo.png", width=100)
     st.markdown("---")  # Add a separator line
 
     st.header("Scraping Controls")
@@ -167,9 +224,74 @@ with st.sidebar:
     # Start scraping button
     if st.button("Start Scraping", type="primary"):
         run_scraper()
+        
+    # Verification button (only enabled if scraping is complete)
+    if st.session_state.scraping_complete:
+        if st.button("Verify Current Status", type="secondary", help="Check if terminated listings are still terminated today"):
+            verify_listings()
 
 # Main content area
-if st.session_state.scraping_complete and st.session_state.data is not None:
+if st.session_state.verification_complete and st.session_state.verified_data is not None:
+    # Display verification results
+    st.header("Verification Results")
+    verified_df = st.session_state.verified_data
+    
+    # Count listings by verification status
+    still_terminated = verified_df[verified_df['still_terminated'] == True].shape[0]
+    not_terminated = verified_df[verified_df['still_terminated'] == False].shape[0]
+    not_found = verified_df[verified_df['found'] == False].shape[0]
+    
+    # Display summary
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Still Terminated", still_terminated)
+    with col2:
+        st.metric("No Longer Terminated", not_terminated)
+    with col3:
+        st.metric("Not Found", not_found)
+    
+    # Display detailed results
+    st.subheader("Detailed Verification Results")
+    
+    # Add a status indicator column
+    verified_df['Status Change'] = verified_df.apply(
+        lambda row: "✅ Still Terminated" if row.get('still_terminated', False) else 
+                   ("❌ Not Found" if not row.get('found', True) else "⚠️ No Longer Terminated"),
+        axis=1
+    )
+    
+    # Display the dataframe
+    st.dataframe(
+        verified_df[[
+            'streetAddress', 'city', 'price', 'Status Change', 'status',
+            'displayStatus', 'daysOnMarket', 'modified'
+        ]],
+        hide_index=True,
+        use_container_width=True
+    )
+    
+    # Option to continue with regular view
+    if st.button("Show Original Scrape Results"):
+        st.session_state.verification_complete = False
+    
+    # Download buttons for verification results
+    col1, col2 = st.columns(2)
+    with col1:
+        st.download_button(
+            label="Download Verification JSON",
+            data=verified_df.to_json(orient='records'),
+            file_name="verification_results.json",
+            mime="application/json"
+        )
+    with col2:
+        st.download_button(
+            label="Download Verification CSV",
+            data=verified_df.to_csv(index=False),
+            file_name="verification_results.csv",
+            mime="text/csv"
+        )
+
+elif st.session_state.scraping_complete and st.session_state.data is not None:
     df = st.session_state.data
 
     # Show comparison with client data if available
